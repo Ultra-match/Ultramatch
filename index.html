@@ -1,0 +1,993 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>UltraMatch CRM</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0d0d0d;
+  --white: #1a1d23;
+  --surface: #1a1d23;
+  --surface2: #22262f;
+  --border: #2e3340;
+  --border2: #363c4a;
+  --accent: #3b82f6;
+  --accent-light: rgba(59,130,246,0.15);
+  --accent-dark: #2563eb;
+  --match: #8b5cf6;
+  --match-light: rgba(139,92,246,0.15);
+  --success: #22c55e;
+  --success-light: rgba(34,197,94,0.15);
+  --warn: #f59e0b;
+  --warn-light: rgba(245,158,11,0.15);
+  --danger: #ef4444;
+  --danger-light: rgba(239,68,68,0.15);
+  --text: #f0f2f5;
+  --text2: #8a9ab5;
+  --text3: #4a5568;
+  --font: 'Outfit', sans-serif;
+  --r: 10px;
+  --shadow: 0 1px 3px rgba(0,0,0,0.08);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.12);
+  --shadow-lg: 0 10px 30px rgba(0,0,0,0.15);
+  --bottom-nav: 64px;
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+html, body { height: 100%; overflow: hidden; }
+body { background: var(--bg); color: var(--text); font-family: var(--font); font-size: 14px; }
+
+::-webkit-scrollbar { display: none; }
+
+/* ── APP SHELL ─────────────────────────────── */
+#app {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  height: 100dvh;
+}
+
+/* ── TOP HEADER ────────────────────────────── */
+.top-header {
+  background: var(--white);
+  border-bottom: 1px solid var(--border);
+  padding: 0 16px;
+  height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+  box-shadow: var(--shadow);
+  position: relative;
+  z-index: 10;
+}
+.logo {
+  display: flex; align-items: center; gap: 8px;
+  font-weight: 700; font-size: 1rem; color: var(--text);
+}
+.logo-icon {
+  width: 28px; height: 28px; background: var(--accent);
+  border-radius: 7px; display: flex; align-items: center; justify-content: center;
+  color: white; font-size: 0.85rem;
+}
+.header-right { display: flex; align-items: center; gap: 8px; }
+.match-pill {
+  display: flex; align-items: center; gap: 4px;
+  background: var(--match-light); color: var(--match);
+  border: 1px solid #c4b5fd; border-radius: 20px;
+  font-size: 0.72rem; font-weight: 700;
+  padding: 4px 10px; cursor: pointer;
+  transition: background 0.15s;
+}
+.match-pill:hover { background: #ddd6fe; }
+.search-btn {
+  width: 34px; height: 34px; border-radius: 8px;
+  border: 1px solid var(--border2); background: var(--surface2);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; font-size: 1rem; color: var(--text2);
+  transition: all 0.12s;
+}
+.search-btn:hover { background: var(--border); }
+
+/* ── SEARCH BAR (expandable) ───────────────── */
+.search-bar {
+  background: var(--white);
+  border-bottom: 1px solid var(--border);
+  padding: 10px 16px;
+  display: none;
+  flex-shrink: 0;
+}
+.search-bar.open { display: flex; gap: 8px; align-items: center; }
+.search-bar input {
+  flex: 1; background: var(--surface2); border: 1px solid var(--border2);
+  border-radius: 8px; padding: 9px 14px; font-family: var(--font);
+  font-size: 0.9rem; color: var(--text); outline: none;
+}
+.search-bar input:focus { border-color: var(--accent); }
+.search-cancel {
+  font-size: 0.82rem; font-weight: 600; color: var(--accent);
+  background: none; border: none; cursor: pointer; white-space: nowrap;
+}
+
+/* ── CATEGORY PILLS ROW ────────────────────── */
+.cat-row {
+  background: var(--white);
+  border-bottom: 1px solid var(--border);
+  padding: 10px 16px;
+  display: flex;
+  gap: 7px;
+  overflow-x: auto;
+  flex-shrink: 0;
+  -webkit-overflow-scrolling: touch;
+}
+.cat-row::-webkit-scrollbar { display: none; }
+.cat-pill {
+  display: flex; align-items: center; gap: 5px;
+  padding: 6px 12px; border-radius: 20px;
+  font-size: 0.78rem; font-weight: 600;
+  border: 1.5px solid var(--border2);
+  background: var(--surface2); color: var(--text2);
+  cursor: pointer; white-space: nowrap;
+  transition: all 0.12s; flex-shrink: 0;
+}
+.cat-pill.active {
+  border-color: transparent; color: white;
+}
+.cat-pill.active.p-todos { background: var(--text); }
+.cat-pill.active.p-COMPRA { background: var(--success); }
+.cat-pill.active.p-VENDA { background: var(--accent); }
+.cat-pill.active.p-LOCACAO { background: var(--warn); }
+.cat-pill.active.p-CONSERTO { background: var(--danger); }
+.cat-pill.active.p-PECAS { background: var(--match); }
+.cat-pill .pill-count {
+  background: rgba(255,255,255,0.3);
+  border-radius: 10px; padding: 1px 6px; font-size: 0.68rem; font-weight: 700;
+}
+.cat-pill:not(.active) .pill-count { background: var(--border); color: var(--text3); }
+
+/* ── SCROLL CONTENT ────────────────────────── */
+.scroll-content {
+  flex: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 12px 14px calc(var(--bottom-nav) + var(--safe-bottom) + 72px);
+}
+
+/* ── CARDS ─────────────────────────────────── */
+.card {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+  margin-bottom: 10px;
+  box-shadow: var(--shadow);
+  transition: box-shadow 0.2s;
+  active { box-shadow: var(--shadow-md); }
+}
+.card.has-match { border-color: #c4b5fd; }
+.card-stripe { height: 3px; }
+.stripe-COMPRA { background: linear-gradient(90deg,#16a34a,#4ade80); }
+.stripe-VENDA  { background: linear-gradient(90deg,#1e6ef5,#60a5fa); }
+.stripe-LOCACAO{ background: linear-gradient(90deg,#d97706,#fbbf24); }
+.stripe-CONSERTO{background: linear-gradient(90deg,#dc2626,#f87171); }
+.stripe-PECAS  { background: linear-gradient(90deg,#7c3aed,#a78bfa); }
+
+.card-body { padding: 12px 14px; }
+.card-row1 { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
+.card-badges { display: flex; gap: 5px; flex-wrap: wrap; }
+.cat-badge {
+  font-size: 0.65rem; font-weight: 700; letter-spacing: 0.3px;
+  padding: 3px 8px; border-radius: 20px; text-transform: uppercase;
+}
+.badge-COMPRA  { background: var(--success-light); color: var(--success); }
+.badge-VENDA   { background: var(--accent-light); color: var(--accent); }
+.badge-LOCACAO { background: var(--warn-light); color: var(--warn); }
+.badge-CONSERTO{ background: var(--danger-light); color: var(--danger); }
+.badge-PECAS   { background: var(--match-light); color: var(--match); }
+.match-badge-sm {
+  font-size: 0.65rem; font-weight: 700; padding: 3px 8px;
+  border-radius: 20px; background: var(--match); color: white;
+}
+
+.card-menu-btn {
+  width: 30px; height: 30px; border-radius: 7px;
+  border: 1px solid var(--border); background: var(--surface2);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; font-size: 1rem; color: var(--text2);
+  flex-shrink: 0;
+}
+
+.card-name { font-size: 1rem; font-weight: 700; margin-bottom: 2px; }
+.card-contact { font-size: 0.78rem; color: var(--text2); margin-bottom: 8px; }
+
+.equip-box {
+  background: var(--surface2); border: 1px solid var(--border);
+  border-radius: 7px; padding: 8px 10px; margin-bottom: 8px;
+}
+.equip-model { font-size: 0.9rem; font-weight: 700; }
+.equip-price { font-size: 0.72rem; color: var(--text2); margin-top: 2px; }
+
+.card-notes { font-size: 0.78rem; color: var(--text2); line-height: 1.5; margin-bottom: 8px; }
+
+/* MEDIA THUMBS */
+.media-row {
+  display: flex; gap: 5px; overflow-x: auto; margin-bottom: 8px;
+  -webkit-overflow-scrolling: touch;
+}
+.media-row::-webkit-scrollbar { display: none; }
+.mthumb {
+  width: 60px; height: 60px; border-radius: 7px;
+  object-fit: cover; border: 1px solid var(--border);
+  flex-shrink: 0; cursor: pointer;
+}
+.mthumb-vid {
+  width: 60px; height: 60px; border-radius: 7px;
+  background: #1a202c; border: 1px solid var(--border);
+  flex-shrink: 0; cursor: pointer; position: relative;
+  overflow: hidden; display: flex; align-items: center; justify-content: center;
+}
+.mthumb-vid video { width: 100%; height: 100%; object-fit: cover; }
+.mthumb-vid-play {
+  position: absolute; width: 22px; height: 22px;
+  background: rgba(255,255,255,0.85); border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.6rem; pointer-events: none;
+}
+
+.card-footer {
+  display: flex; justify-content: space-between; align-items: center;
+  padding-top: 8px; border-top: 1px solid var(--border);
+}
+.card-date { font-size: 0.68rem; color: var(--text3); }
+.btn-hist {
+  font-size: 0.72rem; font-weight: 600; color: var(--accent);
+  background: var(--accent-light); border: none; border-radius: 6px;
+  padding: 4px 10px; cursor: pointer;
+}
+
+/* ── MATCHES VIEW ───────────────────────────── */
+.match-card {
+  background: var(--white); border: 1px solid #c4b5fd;
+  border-radius: 12px; overflow: hidden; margin-bottom: 10px;
+  box-shadow: var(--shadow);
+}
+.match-card-top {
+  background: var(--match-light); padding: 9px 14px;
+  font-size: 0.78rem; font-weight: 700; color: var(--match);
+  border-bottom: 1px solid #ddd6fe;
+}
+.match-pair {
+  padding: 12px 14px;
+  display: flex; flex-direction: column; gap: 10px;
+}
+.match-side {
+  background: var(--surface2); border-radius: 8px; padding: 10px 12px;
+}
+.match-side-label {
+  font-size: 0.65rem; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.5px; color: var(--text3); margin-bottom: 3px;
+}
+.match-side-name { font-size: 0.95rem; font-weight: 700; }
+.match-side-contact { font-size: 0.75rem; color: var(--text2); margin-top: 2px; }
+.match-side-price { font-size: 0.72rem; color: var(--accent); margin-top: 3px; font-weight: 500; }
+.match-divider {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 1.1rem; color: var(--match); justify-content: center;
+}
+.match-equip-row {
+  padding: 10px 14px; border-top: 1px solid var(--border);
+  background: var(--surface2); display: flex; align-items: center; justify-content: space-between; gap: 10px;
+}
+.match-equip-name { font-size: 0.88rem; font-weight: 700; }
+.match-equip-sub { font-size: 0.68rem; color: var(--text3); margin-top: 1px; }
+.btn-match-hist {
+  font-size: 0.72rem; font-weight: 600; padding: 6px 12px;
+  background: var(--match); color: white; border: none;
+  border-radius: 7px; cursor: pointer; white-space: nowrap;
+}
+
+/* ── EMPTY ─────────────────────────────────── */
+.empty {
+  display: flex; flex-direction: column; align-items: center;
+  justify-content: center; padding: 60px 20px; gap: 10px; text-align: center;
+}
+.empty-icon { font-size: 2.5rem; opacity: 0.3; }
+.empty-title { font-size: 1rem; font-weight: 600; color: var(--text2); }
+.empty-sub { font-size: 0.82rem; color: var(--text3); max-width: 240px; line-height: 1.6; }
+
+/* ── FAB ───────────────────────────────────── */
+.fab {
+  position: fixed;
+  right: 18px;
+  bottom: calc(var(--bottom-nav) + var(--safe-bottom) + 14px);
+  width: 52px; height: 52px;
+  background: var(--accent); color: white;
+  border-radius: 50%; border: none;
+  font-size: 1.5rem; font-weight: 300;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; z-index: 50;
+  box-shadow: 0 4px 14px rgba(30,110,245,0.45);
+  transition: all 0.15s;
+}
+.fab:hover { transform: scale(1.05); }
+.fab:active { transform: scale(0.95); }
+
+/* ── BOTTOM NAV ────────────────────────────── */
+.bottom-nav {
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  height: calc(var(--bottom-nav) + var(--safe-bottom));
+  padding-bottom: var(--safe-bottom);
+  background: var(--white);
+  border-top: 1px solid var(--border);
+  display: flex;
+  z-index: 100;
+  box-shadow: 0 -2px 10px rgba(0,0,0,0.06);
+}
+.bn-item {
+  flex: 1; display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: 3px; cursor: pointer; padding: 8px 4px;
+  transition: all 0.12s; position: relative;
+}
+.bn-icon { font-size: 1.15rem; line-height: 1; }
+.bn-label { font-size: 0.62rem; font-weight: 600; color: var(--text3); }
+.bn-item.active .bn-label { color: var(--accent); }
+.bn-item.active .bn-icon { filter: none; }
+.bn-badge {
+  position: absolute; top: 5px; right: calc(50% - 16px);
+  background: var(--match); color: white;
+  font-size: 0.55rem; font-weight: 700;
+  padding: 2px 5px; border-radius: 10px; min-width: 16px; text-align: center;
+}
+
+/* ── MODAL ─────────────────────────────────── */
+.overlay {
+  position: fixed; inset: 0; background: rgba(15,20,30,0.5);
+  backdrop-filter: blur(3px); z-index: 300;
+  display: flex; align-items: flex-end;
+  animation: fadeIn 0.15s ease;
+}
+@keyframes fadeIn { from{opacity:0} to{opacity:1} }
+.modal {
+  background: var(--white);
+  border-radius: 18px 18px 0 0;
+  width: 100%; max-height: 94vh;
+  overflow-y: auto;
+  animation: slideUp 0.25s cubic-bezier(0.32, 0.72, 0, 1);
+  padding-bottom: var(--safe-bottom);
+}
+@keyframes slideUp { from{transform:translateY(100%)} to{transform:translateY(0)} }
+
+.modal-handle {
+  width: 36px; height: 4px; background: var(--border2);
+  border-radius: 2px; margin: 10px auto 0;
+}
+.modal-header {
+  padding: 14px 18px 12px;
+  display: flex; align-items: center; justify-content: space-between;
+  border-bottom: 1px solid var(--border);
+  position: sticky; top: 0; background: var(--white); z-index: 1;
+}
+.modal-title { font-size: 1rem; font-weight: 700; }
+.btn-close {
+  width: 30px; height: 30px; border-radius: 7px;
+  border: 1px solid var(--border); background: var(--surface2);
+  color: var(--text2); cursor: pointer;
+  display: flex; align-items: center; justify-content: center; font-size: 0.85rem;
+}
+
+.modal-body { padding: 16px 18px; }
+.form-group { margin-bottom: 14px; }
+.form-label { display: block; font-size: 0.75rem; font-weight: 600; color: var(--text2); margin-bottom: 5px; }
+.form-input, .form-select, .form-textarea {
+  width: 100%; background: var(--surface2); border: 1.5px solid var(--border2);
+  border-radius: 9px; padding: 11px 13px;
+  font-family: var(--font); font-size: 0.9rem; color: var(--text); outline: none;
+  transition: border-color 0.15s;
+  -webkit-appearance: none; appearance: none;
+}
+.form-input:focus, .form-select:focus, .form-textarea:focus { border-color: var(--accent); }
+.form-input::placeholder, .form-textarea::placeholder { color: var(--text3); }
+.form-textarea { resize: none; min-height: 72px; line-height: 1.5; }
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+/* UPLOAD */
+.upload-zone {
+  border: 2px dashed var(--border2); border-radius: 10px;
+  padding: 18px; text-align: center; cursor: pointer;
+  background: var(--surface2); transition: all 0.15s;
+}
+.upload-zone:active { background: var(--accent-light); border-color: var(--accent); }
+.upload-zone-icon { font-size: 1.6rem; margin-bottom: 5px; opacity: 0.5; }
+.upload-zone-text { font-size: 0.82rem; color: var(--text2); }
+.upload-zone-sub { font-size: 0.7rem; color: var(--text3); margin-top: 3px; }
+.upload-previews { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.preview-item { position: relative; width: 70px; height: 70px; }
+.preview-item img, .preview-item video {
+  width: 70px; height: 70px; border-radius: 7px; object-fit: cover; border: 1px solid var(--border);
+}
+.preview-remove {
+  position: absolute; top: -6px; right: -6px;
+  width: 18px; height: 18px; border-radius: 50%;
+  background: var(--danger); color: white; border: none;
+  font-size: 0.6rem; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+}
+.preview-video-icon {
+  position: absolute; bottom: 4px; left: 4px;
+  background: rgba(0,0,0,0.6); color: white; font-size: 0.5rem; padding: 2px 4px; border-radius: 3px;
+}
+
+.modal-footer {
+  padding: 12px 18px; border-top: 1px solid var(--border);
+  display: flex; gap: 8px;
+  position: sticky; bottom: 0; background: var(--white);
+}
+.btn-cancel {
+  flex: 1; background: var(--surface2); color: var(--text2);
+  border: 1.5px solid var(--border2); border-radius: 10px;
+  padding: 12px; font-family: var(--font); font-size: 0.9rem;
+  font-weight: 600; cursor: pointer;
+}
+.btn-save {
+  flex: 2; background: var(--accent); color: white; border: none;
+  border-radius: 10px; padding: 12px; font-family: var(--font);
+  font-size: 0.9rem; font-weight: 700; cursor: pointer;
+  box-shadow: 0 2px 8px rgba(30,110,245,0.35);
+}
+
+/* HIST */
+.hist-list { max-height: 220px; overflow-y: auto; margin-bottom: 12px; }
+.hist-entry { display: flex; gap: 10px; padding: 9px 0; border-bottom: 1px solid var(--border); }
+.hist-entry:last-child { border-bottom: none; }
+.hist-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); margin-top: 5px; flex-shrink: 0; }
+.hist-text { font-size: 0.85rem; color: var(--text); flex: 1; line-height: 1.4; }
+.hist-date { font-size: 0.65rem; color: var(--text3); margin-top: 2px; }
+.hist-input-row { display: flex; gap: 8px; }
+.btn-hist-add {
+  background: var(--accent); color: white; border: none; border-radius: 9px;
+  padding: 11px 14px; font-family: var(--font); font-size: 0.82rem; font-weight: 600; cursor: pointer;
+  white-space: nowrap;
+}
+
+/* CONTEXT MENU */
+.ctx-overlay {
+  position: fixed; inset: 0; z-index: 400;
+  background: rgba(0,0,0,0.35); backdrop-filter: blur(2px);
+  animation: fadeIn 0.15s ease;
+}
+.ctx-menu {
+  position: fixed; background: var(--white); border-radius: 14px;
+  overflow: hidden; box-shadow: var(--shadow-lg);
+  min-width: 180px; z-index: 401;
+  animation: scaleIn 0.15s ease;
+}
+@keyframes scaleIn { from{opacity:0;transform:scale(0.9)} to{opacity:1;transform:scale(1)} }
+.ctx-item {
+  padding: 14px 18px; font-size: 0.9rem; font-weight: 500;
+  cursor: pointer; display: flex; align-items: center; gap: 10px;
+  border-bottom: 1px solid var(--border);
+  transition: background 0.1s;
+}
+.ctx-item:last-child { border-bottom: none; }
+.ctx-item:active { background: var(--surface2); }
+.ctx-item.danger { color: var(--danger); }
+
+/* LIGHTBOX */
+.lightbox {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.93);
+  z-index: 900; display: flex; align-items: center; justify-content: center;
+}
+.lightbox img { max-width: 100vw; max-height: 85vh; object-fit: contain; }
+.lightbox video { max-width: 100vw; max-height: 85vh; }
+.lb-close {
+  position: absolute; top: 16px; right: 16px;
+  background: rgba(255,255,255,0.15); color: white; border: none;
+  border-radius: 50%; width: 36px; height: 36px; font-size: 1rem;
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  z-index: 1;
+}
+.lb-nav {
+  position: absolute; top: 50%; transform: translateY(-50%);
+  background: rgba(255,255,255,0.15); color: white; border: none;
+  border-radius: 50%; width: 40px; height: 40px; font-size: 1.1rem;
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+}
+.lb-prev { left: 12px; }
+.lb-next { right: 12px; }
+.lb-counter {
+  position: absolute; bottom: 18px; left: 50%; transform: translateX(-50%);
+  color: rgba(255,255,255,0.6); font-size: 0.78rem;
+}
+</style>
+</head>
+<body>
+
+<div id="app">
+  <!-- TOP HEADER -->
+  <div class="top-header">
+    <div class="logo">
+      <div class="logo-icon">⟳</div>
+      UltraMatch
+    </div>
+    <div class="header-right">
+      <div class="match-pill" id="matchPill" onclick="setView('matches')">✦ <span id="hMatchCount">0</span></div>
+      <div class="search-btn" onclick="toggleSearch()">🔍</div>
+    </div>
+  </div>
+
+  <!-- SEARCH BAR -->
+  <div class="search-bar" id="searchBar">
+    <input type="text" id="searchInput" placeholder="Buscar cliente ou modelo..." oninput="render()">
+    <button class="search-cancel" onclick="toggleSearch()">Cancelar</button>
+  </div>
+
+  <!-- CATEGORY PILLS -->
+  <div class="cat-row" id="catRow"></div>
+
+  <!-- SCROLL CONTENT -->
+  <div class="scroll-content" id="scrollContent"></div>
+
+  <!-- FAB -->
+  <button class="fab" id="fab" onclick="openModal()">+</button>
+
+  <!-- BOTTOM NAV -->
+  <nav class="bottom-nav">
+    <div class="bn-item active" id="bn-lista" onclick="setView('todos')">
+      <div class="bn-icon">◈</div>
+      <div class="bn-label">Clientes</div>
+    </div>
+    <div class="bn-item" id="bn-matches" onclick="setView('matches')">
+      <div class="bn-icon">✦</div>
+      <div class="bn-label">Matches</div>
+      <div class="bn-badge" id="bnMatchBadge" style="display:none">0</div>
+    </div>
+    <div class="bn-item" id="bn-busca" onclick="setView('todos');toggleSearch()">
+      <div class="bn-icon">🔍</div>
+      <div class="bn-label">Buscar</div>
+    </div>
+  </nav>
+</div>
+
+<!-- MODAL CLIENTE -->
+<div class="overlay" id="modalOverlay" style="display:none" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-header">
+      <div class="modal-title" id="modalTitle">Novo Cliente</div>
+      <button class="btn-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Nome *</label>
+          <input class="form-input" id="f-nome" placeholder="Nome completo">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Contato *</label>
+          <input class="form-input" id="f-contato" placeholder="(79) 9 9999-0000" type="tel">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Categoria *</label>
+        <select class="form-select" id="f-cat">
+          <option value="">Selecione...</option>
+          <option value="COMPRA">Quer Comprar</option>
+          <option value="VENDA">Quer Vender</option>
+          <option value="LOCACAO">Locação</option>
+          <option value="CONSERTO">Conserto / Reparo</option>
+          <option value="PECAS">Peças & Acessórios</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Marca</label>
+          <input class="form-input" id="f-marca" placeholder="Samsung, GE...">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Modelo *</label>
+          <input class="form-input" id="f-modelo" placeholder="HM70A...">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Preço Mín. (R$)</label>
+          <input class="form-input" id="f-pmin" type="number" placeholder="0">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Preço Máx. (R$)</label>
+          <input class="form-input" id="f-pmax" type="number" placeholder="0">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Observações</label>
+        <textarea class="form-textarea" id="f-notas" placeholder="Condição, urgência, detalhes..."></textarea>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Fotos & Vídeos</label>
+        <div class="upload-zone" onclick="document.getElementById('fileInput').click()">
+          <div class="upload-zone-icon">📷</div>
+          <div class="upload-zone-text">Toque para adicionar fotos e vídeos</div>
+          <div class="upload-zone-sub">JPG, PNG, MP4, MOV</div>
+        </div>
+        <input type="file" id="fileInput" multiple accept="image/*,video/*" style="display:none" onchange="handleFiles(this.files)">
+        <div class="upload-previews" id="uploadPreviews"></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeModal()">Cancelar</button>
+      <button class="btn-save" onclick="saveClient()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL HISTÓRICO -->
+<div class="overlay" id="histOverlay" style="display:none" onclick="if(event.target===this)closeHist()">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-header">
+      <div class="modal-title" id="histTitle">Histórico</div>
+      <button class="btn-close" onclick="closeHist()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="hist-list" id="histList"></div>
+      <div class="hist-input-row">
+        <input class="form-input" id="histInput" placeholder="Registrar interação..." onkeydown="if(event.key==='Enter')addHist()">
+        <button class="btn-hist-add" onclick="addHist()">+ Ok</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- CONTEXT MENU -->
+<div class="ctx-overlay" id="ctxOverlay" style="display:none" onclick="closeCtx()">
+  <div class="ctx-menu" id="ctxMenu">
+    <div class="ctx-item" onclick="ctxEdit()">✎ &nbsp;Editar</div>
+    <div class="ctx-item" onclick="ctxHist()">💬 &nbsp;Histórico</div>
+    <div class="ctx-item danger" onclick="ctxDelete()">✕ &nbsp;Excluir</div>
+  </div>
+</div>
+
+<!-- LIGHTBOX -->
+<div class="lightbox" id="lightbox" style="display:none" onclick="closeLb()">
+  <button class="lb-close" onclick="closeLb()">✕</button>
+  <button class="lb-nav lb-prev" onclick="event.stopPropagation();lbNav(-1)">‹</button>
+  <div id="lbMedia"></div>
+  <button class="lb-nav lb-next" onclick="event.stopPropagation();lbNav(1)">›</button>
+  <div class="lb-counter" id="lbCounter"></div>
+</div>
+
+<script>
+// ── STATE ──────────────────────────────────────────────
+let clients = JSON.parse(localStorage.getItem('um_v3') || '[]');
+let view = 'todos';
+let editId = null;
+let histId = null;
+let pendingMedia = [];
+let ctxClientId = null;
+let lbItems = [], lbIdx = 0;
+
+const save = () => localStorage.setItem('um_v3', JSON.stringify(clients));
+
+// ── MATCH ENGINE ──────────────────────────────────────
+const PAIRS = { COMPRA:'VENDA', VENDA:'COMPRA', LOCACAO:'LOCACAO', CONSERTO:'PECAS', PECAS:'CONSERTO' };
+const norm = s => (s||'').toLowerCase().replace(/[\s\-]/g,'');
+
+function getMatches() {
+  const res=[], seen=new Set();
+  for(let i=0;i<clients.length;i++) for(let j=i+1;j<clients.length;j++){
+    const a=clients[i],b=clients[j];
+    const k=[a.id,b.id].sort().join('-');
+    if(seen.has(k)) continue;
+    if(!a.modelo||!b.modelo) continue;
+    if(norm(a.modelo)===norm(b.modelo) && PAIRS[a.categoria]===b.categoria){
+      seen.add(k);
+      res.push({a,b,model:(a.marca?a.marca+' ':'')+a.modelo});
+    }
+  }
+  return res;
+}
+function matchIds(){const ids=new Set();getMatches().forEach(m=>{ids.add(m.a.id);ids.add(m.b.id);});return ids;}
+
+// ── HELPERS ───────────────────────────────────────────
+const catNames={COMPRA:'Quer Comprar',VENDA:'Quer Vender',LOCACAO:'Locação',CONSERTO:'Conserto',PECAS:'Peças'};
+const catEmoji={COMPRA:'↓',VENDA:'↑',LOCACAO:'⟳',CONSERTO:'⚙',PECAS:'◎',todos:'◈',matches:'✦'};
+const viewTitles={todos:'Todos',matches:'Matches',COMPRA:'Comprando',VENDA:'Vendendo',LOCACAO:'Locação',CONSERTO:'Conserto',PECAS:'Peças'};
+const fmtDate = ts => new Date(ts).toLocaleDateString('pt-BR',{day:'2-digit',month:'short'});
+const fmtPrice = (min,max) => {
+  if(!min&&!max) return '';
+  const f=v=>'R$\u00a0'+Number(v).toLocaleString('pt-BR');
+  if(min&&max) return f(min)+' – '+f(max);
+  return min?'a partir de '+f(min):'até '+f(max);
+};
+
+// ── RENDER ────────────────────────────────────────────
+function setView(v) {
+  view=v;
+  // bottom nav
+  ['lista','matches','busca'].forEach(k=>{
+    document.getElementById('bn-'+k)?.classList.remove('active');
+  });
+  if(v==='todos') document.getElementById('bn-lista')?.classList.add('active');
+  else if(v==='matches') document.getElementById('bn-matches')?.classList.add('active');
+  // FAB: hide on matches
+  document.getElementById('fab').style.display = v==='matches'?'none':'flex';
+  render();
+}
+
+function render(){
+  const matches=getMatches();
+  const mids=matchIds();
+  const cats=['COMPRA','VENDA','LOCACAO','CONSERTO','PECAS'];
+  const total=clients.length;
+  const mc=matches.length;
+
+  // badges
+  document.getElementById('hMatchCount').textContent=mc;
+  const bb=document.getElementById('bnMatchBadge');
+  bb.style.display=mc>0?'block':'none'; bb.textContent=mc;
+
+  // cat pills
+  const catRow=document.getElementById('catRow');
+  const allViews=['todos',...cats];
+  catRow.innerHTML=allViews.map(c=>{
+    const n=c==='todos'?total:clients.filter(x=>x.categoria===c).length;
+    return `<div class="cat-pill p-${c} ${view===c?'active':''}" onclick="setView('${c}')">
+      ${catEmoji[c]||''} ${c==='todos'?'Todos':catNames[c]||c}
+      <span class="pill-count">${n}</span>
+    </div>`;
+  }).join('');
+
+  const content=document.getElementById('scrollContent');
+  const search=document.getElementById('searchInput').value.toLowerCase();
+
+  if(view==='matches'){
+    if(mc===0){
+      content.innerHTML=`<div class="empty"><div class="empty-icon">✦</div><div class="empty-title">Nenhum match ainda</div><div class="empty-sub">Quando dois clientes precisarem do mesmo equipamento em categorias complementares, aparece aqui.</div></div>`;
+      return;
+    }
+    content.innerHTML=matches.map(m=>`
+      <div class="match-card">
+        <div class="match-card-top">✦ MATCH — ${m.model}</div>
+        <div class="match-pair">
+          <div class="match-side">
+            <div class="match-side-label">${catNames[m.a.categoria]}</div>
+            <div class="match-side-name">${m.a.nome}</div>
+            <div class="match-side-contact">${m.a.contato}</div>
+            ${m.a.precoMin||m.a.precoMax?`<div class="match-side-price">${fmtPrice(m.a.precoMin,m.a.precoMax)}</div>`:''}
+          </div>
+          <div class="match-divider">⟷ match</div>
+          <div class="match-side">
+            <div class="match-side-label">${catNames[m.b.categoria]}</div>
+            <div class="match-side-name">${m.b.nome}</div>
+            <div class="match-side-contact">${m.b.contato}</div>
+            ${m.b.precoMin||m.b.precoMax?`<div class="match-side-price">${fmtPrice(m.b.precoMin,m.b.precoMax)}</div>`:''}
+          </div>
+        </div>
+        <div class="match-equip-row">
+          <div><div class="match-equip-name">${m.model}</div><div class="match-equip-sub">Equipamento em comum</div></div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap">
+            <button class="btn-match-hist" onclick="openHist('${m.a.id}')">Hist. ${m.a.nome.split(' ')[0]}</button>
+            <button class="btn-match-hist" onclick="openHist('${m.b.id}')">Hist. ${m.b.nome.split(' ')[0]}</button>
+          </div>
+        </div>
+      </div>
+    `).join('');
+    return;
+  }
+
+  let filtered=clients;
+  if(view!=='todos') filtered=filtered.filter(c=>c.categoria===view);
+  if(search) filtered=filtered.filter(c=>
+    c.nome.toLowerCase().includes(search)||
+    (c.modelo||'').toLowerCase().includes(search)||
+    (c.marca||'').toLowerCase().includes(search)||
+    (c.contato||'').includes(search)
+  );
+  filtered=[...filtered].sort((a,b)=>(mids.has(b.id)?1:0)-(mids.has(a.id)?1:0)||b.createdAt-a.createdAt);
+
+  if(filtered.length===0){
+    content.innerHTML=`<div class="empty"><div class="empty-icon">👤</div><div class="empty-title">Nenhum cliente</div><div class="empty-sub">Toque no + para cadastrar um novo cliente.</div></div>`;
+    return;
+  }
+
+  content.innerHTML=filtered.map(c=>cardHTML(c,mids.has(c.id))).join('');
+}
+
+function cardHTML(c,hasMatch){
+  const price=fmtPrice(c.precoMin,c.precoMax);
+  const media=c.media||[];
+  const hc=(c.history||[]).length;
+  const thumbs=media.length>0?`<div class="media-row">${media.map((m,i)=>
+    m.type==='video'
+      ?`<div class="mthumb-vid" onclick="openLb('${c.id}',${i})"><video src="${m.url}" muted playsinline></video><div class="mthumb-vid-play">▶</div></div>`
+      :`<img class="mthumb" src="${m.url}" onclick="openLb('${c.id}',${i})">`
+  ).join('')}</div>`:'';
+  return `<div class="card ${hasMatch?'has-match':''}">
+    <div class="card-stripe stripe-${c.categoria}"></div>
+    <div class="card-body">
+      <div class="card-row1">
+        <div class="card-badges">
+          <span class="cat-badge badge-${c.categoria}">${catNames[c.categoria]}</span>
+          ${hasMatch?'<span class="match-badge-sm">✦ Match</span>':''}
+        </div>
+        <div class="card-menu-btn" onclick="openCtx('${c.id}',event)">⋯</div>
+      </div>
+      <div class="card-name">${c.nome}</div>
+      <div class="card-contact">📞 ${c.contato}</div>
+      <div class="equip-box">
+        <div class="equip-model">${c.marca?c.marca+' ':''}${c.modelo||'—'}</div>
+        ${price?`<div class="equip-price">${price}</div>`:''}
+      </div>
+      ${c.notas?`<div class="card-notes">${c.notas}</div>`:''}
+      ${thumbs}
+      <div class="card-footer">
+        <div class="card-date">${fmtDate(c.createdAt)}</div>
+        <button class="btn-hist" onclick="openHist('${c.id}')">💬 ${hc>0?hc+' notas':'Histórico'}</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+// ── SEARCH TOGGLE ─────────────────────────────────────
+function toggleSearch(){
+  const bar=document.getElementById('searchBar');
+  bar.classList.toggle('open');
+  if(bar.classList.contains('open')) setTimeout(()=>document.getElementById('searchInput').focus(),80);
+  else { document.getElementById('searchInput').value=''; render(); }
+}
+
+// ── MODAL ─────────────────────────────────────────────
+function openModal(){
+  editId=null; pendingMedia=[];
+  document.getElementById('modalTitle').textContent='Novo Cliente';
+  ['nome','contato','marca','modelo','notas'].forEach(f=>document.getElementById('f-'+f).value='');
+  document.getElementById('f-pmin').value='';
+  document.getElementById('f-pmax').value='';
+  document.getElementById('f-cat').value='';
+  document.getElementById('uploadPreviews').innerHTML='';
+  document.getElementById('modalOverlay').style.display='flex';
+  setTimeout(()=>document.getElementById('f-nome').focus(),150);
+}
+function closeModal(){document.getElementById('modalOverlay').style.display='none';editId=null;pendingMedia=[];}
+
+function editClient(id){
+  const c=clients.find(x=>x.id===id);if(!c)return;
+  editId=id; pendingMedia=(c.media||[]).map(m=>({...m}));
+  document.getElementById('modalTitle').textContent='Editar Cliente';
+  document.getElementById('f-nome').value=c.nome;
+  document.getElementById('f-contato').value=c.contato;
+  document.getElementById('f-cat').value=c.categoria;
+  document.getElementById('f-marca').value=c.marca||'';
+  document.getElementById('f-modelo').value=c.modelo||'';
+  document.getElementById('f-pmin').value=c.precoMin||'';
+  document.getElementById('f-pmax').value=c.precoMax||'';
+  document.getElementById('f-notas').value=c.notas||'';
+  renderPreviews();
+  document.getElementById('modalOverlay').style.display='flex';
+}
+
+function saveClient(){
+  const nome=document.getElementById('f-nome').value.trim();
+  const contato=document.getElementById('f-contato').value.trim();
+  const categoria=document.getElementById('f-cat').value;
+  const modelo=document.getElementById('f-modelo').value.trim();
+  if(!nome||!contato||!categoria||!modelo){alert('Preencha Nome, Contato, Categoria e Modelo.');return;}
+  const data={nome,contato,categoria,modelo,
+    marca:document.getElementById('f-marca').value.trim(),
+    precoMin:document.getElementById('f-pmin').value||'',
+    precoMax:document.getElementById('f-pmax').value||'',
+    notas:document.getElementById('f-notas').value.trim(),
+    media:pendingMedia.map(m=>({url:m.url,type:m.type,name:m.name})),
+  };
+  if(editId){
+    const idx=clients.findIndex(x=>x.id===editId);
+    clients[idx]={...clients[idx],...data};
+  } else {
+    const nc={id:Date.now().toString(),createdAt:Date.now(),history:[],...data};
+    clients.unshift(nc);
+    setTimeout(()=>{
+      const m=getMatches().find(m=>m.a.id===nc.id||m.b.id===nc.id);
+      if(m&&confirm(`✦ MATCH!\n\n${m.a.nome} ↔ ${m.b.nome}\n${m.model}\n\nVer matches?`)) setView('matches');
+    },400);
+  }
+  save(); closeModal(); render();
+}
+
+function delClient(id){if(!confirm('Excluir?'))return;clients=clients.filter(x=>x.id!==id);save();render();}
+
+// ── CONTEXT MENU ──────────────────────────────────────
+function openCtx(id,e){
+  ctxClientId=id;
+  const menu=document.getElementById('ctxMenu');
+  const ov=document.getElementById('ctxOverlay');
+  // position near tap
+  const x=Math.min(e.clientX,window.innerWidth-200);
+  const y=Math.min(e.clientY+10,window.innerHeight-160);
+  menu.style.left=x+'px'; menu.style.top=y+'px';
+  ov.style.display='block';
+}
+function closeCtx(){document.getElementById('ctxOverlay').style.display='none';ctxClientId=null;}
+function ctxEdit(){const id=ctxClientId;closeCtx();editClient(id);}
+function ctxHist(){const id=ctxClientId;closeCtx();openHist(id);}
+function ctxDelete(){const id=ctxClientId;closeCtx();delClient(id);}
+
+// ── MEDIA ─────────────────────────────────────────────
+function handleFiles(files){[...files].forEach(f=>{
+  const isV=f.type.startsWith('video/'),isI=f.type.startsWith('image/');
+  if(!isV&&!isI)return;
+  const r=new FileReader();
+  r.onload=e=>{pendingMedia.push({url:e.target.result,type:isV?'video':'image',name:f.name});renderPreviews();};
+  r.readAsDataURL(f);
+});}
+function renderPreviews(){
+  document.getElementById('uploadPreviews').innerHTML=pendingMedia.map((m,i)=>`
+    <div class="preview-item">
+      ${m.type==='video'?`<video src="${m.url}" muted></video><span class="preview-video-icon">▶</span>`:`<img src="${m.url}">`}
+      <button class="preview-remove" onclick="pendingMedia.splice(${i},1);renderPreviews()">✕</button>
+    </div>`).join('');
+}
+
+// ── LIGHTBOX ──────────────────────────────────────────
+function openLb(cid,idx){
+  const c=clients.find(x=>x.id===cid);if(!c?.media?.length)return;
+  lbItems=c.media;lbIdx=Math.min(idx,lbItems.length-1);
+  document.getElementById('lightbox').style.display='flex';
+  showLbItem();
+}
+function showLbItem(){
+  const m=lbItems[lbIdx];
+  const el=document.getElementById('lbMedia');
+  el.innerHTML=m.type==='video'
+    ?`<video src="${m.url}" controls autoplay playsinline style="max-width:100vw;max-height:80vh" onclick="event.stopPropagation()"></video>`
+    :`<img src="${m.url}" style="max-width:100vw;max-height:85vh;object-fit:contain">`;
+  document.getElementById('lbCounter').textContent=(lbIdx+1)+' / '+lbItems.length;
+}
+function lbNav(d){lbIdx=(lbIdx+d+lbItems.length)%lbItems.length;showLbItem();}
+function closeLb(){document.getElementById('lightbox').style.display='none';document.getElementById('lbMedia').innerHTML='';}
+
+// ── HISTÓRICO ─────────────────────────────────────────
+function openHist(id){
+  histId=id;const c=clients.find(x=>x.id===id);if(!c)return;
+  document.getElementById('histTitle').textContent='💬 '+c.nome;
+  renderHist(c);document.getElementById('histOverlay').style.display='flex';
+  setTimeout(()=>document.getElementById('histInput').focus(),150);
+}
+function closeHist(){document.getElementById('histOverlay').style.display='none';histId=null;}
+function renderHist(c){
+  const el=document.getElementById('histList');
+  if(!c.history?.length){el.innerHTML='<div style="color:var(--text3);font-size:0.82rem;padding:6px 0">Nenhuma interação ainda.</div>';return;}
+  el.innerHTML=[...c.history].reverse().map(h=>`
+    <div class="hist-entry">
+      <div class="hist-dot"></div>
+      <div><div class="hist-text">${h.text}</div><div class="hist-date">${fmtDate(h.ts)}</div></div>
+    </div>`).join('');
+}
+function addHist(){
+  const inp=document.getElementById('histInput');
+  const text=inp.value.trim();if(!text||!histId)return;
+  const c=clients.find(x=>x.id===histId);if(!c)return;
+  if(!c.history)c.history=[];
+  c.history.push({text,ts:Date.now()});
+  save();inp.value='';renderHist(c);render();
+}
+
+// ── KEYBOARD ──────────────────────────────────────────
+document.addEventListener('keydown',e=>{
+  if(document.getElementById('lightbox').style.display!=='none'){
+    if(e.key==='ArrowLeft')lbNav(-1);
+    if(e.key==='ArrowRight')lbNav(1);
+    if(e.key==='Escape')closeLb();
+  }
+});
+
+// ── INIT ──────────────────────────────────────────────
+render();
+</script>
+</body>
+</html>
