@@ -300,21 +300,32 @@ body { background: var(--bg); color: var(--text); font-family: var(--font); font
 .empty-sub { font-size: 0.82rem; color: var(--text3); max-width: 240px; line-height: 1.6; }
 
 /* ── FAB ───────────────────────────────────── */
-.fab {
+.fab-group {
   position: fixed;
   right: 18px;
   bottom: calc(var(--bottom-nav) + var(--safe-bottom) + 14px);
+  display: flex; flex-direction: column; align-items: center; gap: 10px;
+  z-index: 50;
+}
+.fab {
   width: 52px; height: 52px;
-  background: var(--accent); color: white;
   border-radius: 50%; border: none;
-  font-size: 1.5rem; font-weight: 300;
   display: flex; align-items: center; justify-content: center;
-  cursor: pointer; z-index: 50;
-  box-shadow: 0 4px 14px rgba(30,110,245,0.45);
+  cursor: pointer;
   transition: all 0.15s;
 }
-.fab:hover { transform: scale(1.05); }
 .fab:active { transform: scale(0.95); }
+.fab-main {
+  background: var(--accent); color: white;
+  font-size: 1.5rem; font-weight: 300;
+  box-shadow: 0 4px 14px rgba(59,130,246,0.45);
+}
+.fab-ai {
+  background: var(--match); color: white;
+  font-size: 1.1rem; font-weight: 700;
+  box-shadow: 0 4px 14px rgba(139,92,246,0.45);
+  width: 44px; height: 44px;
+}
 
 /* ── BOTTOM NAV ────────────────────────────── */
 .bottom-nav {
@@ -504,6 +515,47 @@ body { background: var(--bg); color: var(--text); font-family: var(--font); font
   position: absolute; bottom: 18px; left: 50%; transform: translateX(-50%);
   color: rgba(255,255,255,0.6); font-size: 0.78rem;
 }
+
+/* ── AI MODAL ──────────────────────────────── */
+.ai-thinking {
+  display: flex; align-items: center; gap: 10px;
+  padding: 14px; background: var(--match-light);
+  border: 1px solid rgba(139,92,246,0.3);
+  border-radius: 10px; margin-bottom: 14px;
+}
+.ai-thinking-dot {
+  width: 8px; height: 8px; border-radius: 50%; background: var(--match);
+  animation: aiPulse 1s infinite;
+}
+.ai-thinking-dot:nth-child(2) { animation-delay: 0.2s; }
+.ai-thinking-dot:nth-child(3) { animation-delay: 0.4s; }
+@keyframes aiPulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.3;transform:scale(0.7)} }
+.ai-result-box {
+  background: var(--surface2); border: 1px solid var(--border);
+  border-radius: 10px; padding: 14px; margin-bottom: 14px;
+}
+.ai-result-row { display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid var(--border); font-size: 0.82rem; }
+.ai-result-row:last-child { border-bottom: none; }
+.ai-result-label { color: var(--text2); }
+.ai-result-val { color: var(--text); font-weight: 600; text-align: right; max-width: 60%; }
+.btn-ai-confirm {
+  width: 100%; background: var(--match); color: white; border: none;
+  border-radius: 10px; padding: 13px; font-family: var(--font);
+  font-size: 0.95rem; font-weight: 700; cursor: pointer;
+  box-shadow: 0 2px 10px rgba(139,92,246,0.4); margin-bottom: 8px;
+}
+.btn-ai-edit {
+  width: 100%; background: var(--surface2); color: var(--text2);
+  border: 1.5px solid var(--border2); border-radius: 10px; padding: 11px;
+  font-family: var(--font); font-size: 0.875rem; font-weight: 600; cursor: pointer;
+}
+.ai-badge {
+  display: inline-flex; align-items: center; gap: 5px;
+  background: var(--match-light); color: var(--match);
+  border: 1px solid rgba(139,92,246,0.3);
+  font-size: 0.72rem; font-weight: 700; padding: 3px 9px;
+  border-radius: 20px; margin-bottom: 12px;
+}
 </style>
 </head>
 <body>
@@ -533,8 +585,11 @@ body { background: var(--bg); color: var(--text); font-family: var(--font); font
   <!-- SCROLL CONTENT -->
   <div class="scroll-content" id="scrollContent"></div>
 
-  <!-- FAB -->
-  <button class="fab" id="fab" onclick="openModal()">+</button>
+  <!-- FAB GROUP -->
+  <div class="fab-group" id="fabGroup">
+    <button class="fab fab-ai" id="fabAi" onclick="openAiModal()">✦</button>
+    <button class="fab fab-main" id="fab" onclick="openModal()">+</button>
+  </div>
 
   <!-- BOTTOM NAV -->
   <nav class="bottom-nav">
@@ -622,6 +677,42 @@ body { background: var(--bg); color: var(--text); font-family: var(--font); font
     <div class="modal-footer">
       <button class="btn-cancel" onclick="closeModal()">Cancelar</button>
       <button class="btn-save" onclick="saveClient()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- MODAL IA -->
+<div class="overlay" id="aiOverlay" style="display:none" onclick="if(event.target===this)closeAiModal()">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-header">
+      <div class="modal-title">✦ Cadastro com IA</div>
+      <button class="btn-close" onclick="closeAiModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="ai-badge">✦ Powered by Claude</div>
+      <div class="form-group">
+        <label class="form-label">Cole a conversa ou descreva o cliente</label>
+        <textarea class="form-textarea" id="aiInput" placeholder="Exemplos:
+• João quer comprar Samsung HM70A por R$15mil, contato 79 99999-0000
+• Cole aqui uma conversa do WhatsApp com o cliente..." style="min-height:120px"></textarea>
+      </div>
+      <button class="btn-ai-confirm" id="aiAnalyzeBtn" onclick="analyzeWithAI()" style="background:var(--match)">✦ Analisar com IA</button>
+      <div id="aiThinking" style="display:none">
+        <div class="ai-thinking">
+          <div class="ai-thinking-dot"></div>
+          <div class="ai-thinking-dot"></div>
+          <div class="ai-thinking-dot"></div>
+          <span style="font-size:0.82rem;color:var(--match);font-weight:600">Analisando...</span>
+        </div>
+      </div>
+      <div id="aiResultArea" style="display:none">
+        <div style="font-size:0.78rem;color:var(--text2);margin-bottom:10px;font-weight:600">DADOS IDENTIFICADOS:</div>
+        <div class="ai-result-box" id="aiResultBox"></div>
+        <button class="btn-ai-confirm" onclick="confirmAiClient()">✓ Cadastrar Cliente</button>
+        <button class="btn-ai-edit" onclick="editAiClient()">✎ Revisar antes de salvar</button>
+      </div>
     </div>
   </div>
 </div>
@@ -716,7 +807,7 @@ function setView(v) {
   if(v==='todos') document.getElementById('bn-lista')?.classList.add('active');
   else if(v==='matches') document.getElementById('bn-matches')?.classList.add('active');
   // FAB: hide on matches
-  document.getElementById('fab').style.display = v==='matches'?'none':'flex';
+  document.getElementById('fabGroup').style.display = v==='matches'?'none':'flex';
   render();
 }
 
@@ -977,6 +1068,118 @@ function addHist(){
   save();inp.value='';renderHist(c);render();
 }
 
+
+// ── AI CADASTRO ───────────────────────────────────────
+let aiParsed = null;
+
+function openAiModal() {
+  document.getElementById('aiOverlay').style.display = 'flex';
+  document.getElementById('aiInput').value = '';
+  document.getElementById('aiThinking').style.display = 'none';
+  document.getElementById('aiResultArea').style.display = 'none';
+  document.getElementById('aiAnalyzeBtn').style.display = 'block';
+  aiParsed = null;
+  setTimeout(() => document.getElementById('aiInput').focus(), 150);
+}
+
+function closeAiModal() {
+  document.getElementById('aiOverlay').style.display = 'none';
+  aiParsed = null;
+}
+
+async function analyzeWithAI() {
+  const text = document.getElementById('aiInput').value.trim();
+  if (!text) { alert('Cole uma conversa ou descreva o cliente.'); return; }
+
+  document.getElementById('aiAnalyzeBtn').style.display = 'none';
+  document.getElementById('aiThinking').style.display = 'block';
+  document.getElementById('aiResultArea').style.display = 'none';
+
+  try {
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        system: `Você é um assistente de CRM especializado em equipamentos de ultrassom médico. 
+Analise o texto e extraia os dados do cliente em JSON puro, sem markdown, sem explicações.
+Categorias possíveis: COMPRA (quer comprar), VENDA (quer vender), LOCACAO (quer alugar), CONSERTO (precisa de reparo), PECAS (precisa de peças).
+Retorne APENAS o JSON neste formato exato:
+{"nome":"","contato":"","categoria":"","marca":"","modelo":"","precoMin":"","precoMax":"","notas":""}
+Se não tiver certeza de algum campo, deixe vazio. Para preço, coloque apenas números.`,
+        messages: [{ role: 'user', content: text }]
+      })
+    });
+
+    const data = await response.json();
+    const raw = data.content[0].text.replace(/```json|```/g, '').trim();
+    aiParsed = JSON.parse(raw);
+
+    const catNames = { COMPRA:'Quer Comprar', VENDA:'Quer Vender', LOCACAO:'Locação', CONSERTO:'Conserto', PECAS:'Peças & Acessórios' };
+    const fields = [
+      { label: 'Nome', val: aiParsed.nome },
+      { label: 'Contato', val: aiParsed.contato },
+      { label: 'Categoria', val: catNames[aiParsed.categoria] || aiParsed.categoria },
+      { label: 'Marca', val: aiParsed.marca },
+      { label: 'Modelo', val: aiParsed.modelo },
+      { label: 'Preço Mín.', val: aiParsed.precoMin ? 'R$ ' + Number(aiParsed.precoMin).toLocaleString('pt-BR') : '' },
+      { label: 'Preço Máx.', val: aiParsed.precoMax ? 'R$ ' + Number(aiParsed.precoMax).toLocaleString('pt-BR') : '' },
+      { label: 'Observações', val: aiParsed.notas },
+    ].filter(f => f.val);
+
+    document.getElementById('aiResultBox').innerHTML = fields.map(f =>
+      `<div class="ai-result-row"><span class="ai-result-label">${f.label}</span><span class="ai-result-val">${f.val}</span></div>`
+    ).join('');
+
+    document.getElementById('aiThinking').style.display = 'none';
+    document.getElementById('aiResultArea').style.display = 'block';
+
+  } catch(e) {
+    document.getElementById('aiThinking').style.display = 'none';
+    document.getElementById('aiAnalyzeBtn').style.display = 'block';
+    alert('Erro ao analisar. Tente novamente.');
+  }
+}
+
+function confirmAiClient() {
+  if (!aiParsed) return;
+  if (!aiParsed.nome || !aiParsed.contato || !aiParsed.categoria || !aiParsed.modelo) {
+    editAiClient();
+    return;
+  }
+  const nc = { id: Date.now().toString(), createdAt: Date.now(), history: [], media: [],
+    nome: aiParsed.nome, contato: aiParsed.contato, categoria: aiParsed.categoria,
+    marca: aiParsed.marca || '', modelo: aiParsed.modelo,
+    precoMin: aiParsed.precoMin || '', precoMax: aiParsed.precoMax || '',
+    notas: aiParsed.notas || ''
+  };
+  clients.unshift(nc);
+  save();
+  closeAiModal();
+  render();
+  setTimeout(() => {
+    const m = getMatches().find(m => m.a.id === nc.id || m.b.id === nc.id);
+    if (m && confirm('✦ MATCH!\n\n' + m.a.nome + ' ↔ ' + m.b.nome + '\n' + m.model + '\n\nVer matches?')) setView('matches');
+  }, 400);
+}
+
+function editAiClient() {
+  if (!aiParsed) return;
+  closeAiModal();
+  openModal();
+  setTimeout(() => {
+    if (aiParsed.nome) document.getElementById('f-nome').value = aiParsed.nome;
+    if (aiParsed.contato) document.getElementById('f-contato').value = aiParsed.contato;
+    if (aiParsed.categoria) document.getElementById('f-cat').value = aiParsed.categoria;
+    if (aiParsed.marca) document.getElementById('f-marca').value = aiParsed.marca;
+    if (aiParsed.modelo) document.getElementById('f-modelo').value = aiParsed.modelo;
+    if (aiParsed.precoMin) document.getElementById('f-pmin').value = aiParsed.precoMin;
+    if (aiParsed.precoMax) document.getElementById('f-pmax').value = aiParsed.precoMax;
+    if (aiParsed.notas) document.getElementById('f-notas').value = aiParsed.notas;
+  }, 200);
+}
+
 // ── KEYBOARD ──────────────────────────────────────────
 document.addEventListener('keydown',e=>{
   if(document.getElementById('lightbox').style.display!=='none'){
@@ -988,6 +1191,84 @@ document.addEventListener('keydown',e=>{
 
 // ── INIT ──────────────────────────────────────────────
 render();
+</script>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDIh3uxGbk-cZZbT328f0wAuKz-qCumtog",
+  authDomain: "ultramatch-2a2bc.firebaseapp.com",
+  projectId: "ultramatch-2a2bc",
+  storageBucket: "ultramatch-2a2bc.firebasestorage.app",
+  messagingSenderId: "129830937255",
+  appId: "1:129830937255:web:c39254f7877e995f3c3182"
+};
+
+const fbApp = initializeApp(firebaseConfig);
+const auth = getAuth(fbApp);
+
+const loginHTML = `<div id="loginScreen" style="position:fixed;inset:0;background:#0d0d0d;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;padding:24px;font-family:'Outfit',sans-serif;">
+  <div style="width:100%;max-width:360px">
+    <div style="text-align:center;margin-bottom:32px">
+      <div style="width:56px;height:56px;background:#3b82f6;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:1.6rem;margin:0 auto 14px;box-shadow:0 4px 20px rgba(59,130,246,0.4)">⟳</div>
+      <div style="font-size:1.5rem;font-weight:800;color:#f0f2f5;letter-spacing:-0.3px">UltraMatch</div>
+      <div style="font-size:0.82rem;color:#4a5568;margin-top:4px">CRM de Equipamentos de Ultrassom</div>
+    </div>
+    <div style="background:#1a1d23;border:1px solid #2e3340;border-radius:14px;padding:24px">
+      <div style="margin-bottom:14px">
+        <label style="display:block;font-size:0.75rem;font-weight:600;color:#8a9ab5;margin-bottom:6px">E-MAIL</label>
+        <input id="loginEmail" type="email" placeholder="seu@email.com" style="width:100%;background:#22262f;border:1.5px solid #363c4a;border-radius:9px;padding:11px 13px;font-family:'Outfit',sans-serif;font-size:0.9rem;color:#f0f2f5;outline:none;" onfocus="this.style.borderColor='#3b82f6'" onblur="this.style.borderColor='#363c4a'">
+      </div>
+      <div style="margin-bottom:20px">
+        <label style="display:block;font-size:0.75rem;font-weight:600;color:#8a9ab5;margin-bottom:6px">SENHA</label>
+        <input id="loginPass" type="password" placeholder="••••••••" style="width:100%;background:#22262f;border:1.5px solid #363c4a;border-radius:9px;padding:11px 13px;font-family:'Outfit',sans-serif;font-size:0.9rem;color:#f0f2f5;outline:none;" onfocus="this.style.borderColor='#3b82f6'" onblur="this.style.borderColor='#363c4a'" onkeydown="if(event.key==='Enter')window.doLogin()">
+      </div>
+      <div id="loginError" style="display:none;background:rgba(239,68,68,0.12);border:1px solid rgba(239,68,68,0.3);border-radius:8px;padding:10px 12px;font-size:0.8rem;color:#ef4444;margin-bottom:14px;"></div>
+      <button onclick="window.doLogin()" id="loginBtn" style="width:100%;background:#3b82f6;color:white;border:none;border-radius:10px;padding:13px;font-family:'Outfit',sans-serif;font-size:0.95rem;font-weight:700;cursor:pointer;box-shadow:0 2px 10px rgba(59,130,246,0.4);">Entrar</button>
+    </div>
+  </div>
+</div>`;
+
+document.getElementById('app').style.display = 'none';
+document.body.insertAdjacentHTML('beforeend', loginHTML);
+
+window.doLogin = async function() {
+  const email = document.getElementById('loginEmail').value.trim();
+  const pass = document.getElementById('loginPass').value;
+  const btn = document.getElementById('loginBtn');
+  const err = document.getElementById('loginError');
+  if (!email || !pass) { err.style.display='block'; err.textContent='Preencha e-mail e senha.'; return; }
+  btn.textContent = 'Entrando...'; btn.style.opacity = '0.7'; err.style.display = 'none';
+  try {
+    await signInWithEmailAndPassword(auth, email, pass);
+  } catch(e) {
+    btn.textContent = 'Entrar'; btn.style.opacity = '1';
+    err.style.display = 'block'; err.textContent = 'E-mail ou senha incorretos.';
+  }
+};
+
+const logoutBtn = document.createElement('div');
+logoutBtn.style.cssText = 'display:none;cursor:pointer;font-size:0.72rem;font-weight:600;color:#8a9ab5;padding:5px 10px;border:1px solid #2e3340;border-radius:7px;background:#22262f;white-space:nowrap;';
+logoutBtn.textContent = 'Sair';
+logoutBtn.onclick = () => signOut(auth);
+document.querySelector('.header-right').prepend(logoutBtn);
+
+onAuthStateChanged(auth, user => {
+  if (user) {
+    document.getElementById('loginScreen')?.remove();
+    document.getElementById('app').style.display = 'flex';
+    logoutBtn.style.display = 'block';
+    render();
+  } else {
+    document.getElementById('app').style.display = 'none';
+    logoutBtn.style.display = 'none';
+    if (!document.getElementById('loginScreen')) {
+      document.body.insertAdjacentHTML('beforeend', loginHTML);
+    }
+  }
+});
 </script>
 </body>
 </html>
