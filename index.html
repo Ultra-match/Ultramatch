@@ -1287,6 +1287,7 @@ render();
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyDIh3uxGbk-cZZbT328f0wAuKz-qCumtog",
@@ -1299,6 +1300,116 @@ const firebaseConfig = {
 
 const fbApp = initializeApp(firebaseConfig);
 const auth = getAuth(fbApp);
+const db = getFirestore(fbApp);
+
+// ── FIRESTORE SYNC ────────────────────────────────────
+let unsubscribeFirestore = null;
+
+function startSync(userId) {
+  if (unsubscribeFirestore) unsubscribeFirestore();
+  const q = query(collection(db, 'users', userId, 'clients'), orderBy('createdAt', 'desc'));
+  unsubscribeFirestore = onSnapshot(q, snapshot => {
+    clients = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+    render();
+  });
+}
+
+function stopSync() {
+  if (unsubscribeFirestore) { unsubscribeFirestore(); unsubscribeFirestore = null; }
+  clients = [];
+}
+
+// Override save to use Firestore
+const _origSave = window.save;
+window.save = function() {
+  // No-op: saves happen per-operation below
+};
+
+// Override client operations to use Firestore
+window._fsUserId = null;
+
+async function fsSetClient(c) {
+  if (!window._fsUserId) return;
+  const ref = doc(db, 'users', window._fsUserId, 'clients', c.id);
+  await setDoc(ref, c);
+}
+
+async function fsDeleteClient(id) {
+  if (!window._fsUserId) return;
+  const ref = doc(db, 'users', window._fsUserId, 'clients', id);
+  await deleteDoc(ref);
+}
+
+// Patch saveClient to use Firestore
+const origSaveClient = window.saveClient;
+window.saveClient = async function() {
+  const nome = document.getElementById('f-nome').value.trim();
+  const contato = document.getElementById('f-contato').value.trim();
+  const categoria = document.getElementById('f-cat').value;
+  const modelo = document.getElementById('f-modelo').value.trim();
+  if (!nome || !contato || !categoria || !modelo) { alert('Preencha Nome, Contato, Categoria e Modelo.'); return; }
+  const data = {
+    nome, contato, categoria, modelo,
+    marca: document.getElementById('f-marca').value.trim(),
+    precoMin: document.getElementById('f-pmin').value || '',
+    precoMax: document.getElementById('f-pmax').value || '',
+    notas: document.getElementById('f-notas').value.trim(),
+    cidade: document.getElementById('f-cidade').value.trim(),
+    estado: document.getElementById('f-estado').value,
+    media: pendingMedia.map(m => ({ url: m.url, type: m.type, name: m.name })),
+  };
+  if (editId) {
+    const idx = clients.findIndex(x => x.id === editId);
+    const updated = { ...clients[idx], ...data };
+    await fsSetClient(updated);
+  } else {
+    const nc = { id: Date.now().toString(), createdAt: Date.now(), history: [], ...data };
+    await fsSetClient(nc);
+    setTimeout(() => {
+      const m = getMatches().find(m => m.a.id === nc.id || m.b.id === nc.id);
+      if (m && confirm('✦ MATCH!\n\n' + m.a.nome + ' ↔ ' + m.b.nome + '\n' + m.model + '\n\nVer matches?')) setView('matches');
+    }, 600);
+  }
+  closeModal();
+};
+
+// Patch delClient
+window.delClient = async function(id) {
+  if (!confirm('Excluir?')) return;
+  await fsDeleteClient(id);
+};
+
+// Patch confirmAiClient
+window.confirmAiClient = async function() {
+  if (!aiParsed) return;
+  if (!aiParsed.nome || !aiParsed.contato || !aiParsed.categoria || !aiParsed.modelo) {
+    editAiClient(); return;
+  }
+  const nc = {
+    id: Date.now().toString(), createdAt: Date.now(), history: [], media: [],
+    nome: aiParsed.nome, contato: aiParsed.contato, categoria: aiParsed.categoria,
+    marca: aiParsed.marca || '', modelo: aiParsed.modelo,
+    precoMin: aiParsed.precoMin || '', precoMax: aiParsed.precoMax || '',
+    notas: aiParsed.notas || '', cidade: '', estado: ''
+  };
+  await fsSetClient(nc);
+  closeAiModal();
+  setTimeout(() => {
+    const m = getMatches().find(m => m.a.id === nc.id || m.b.id === nc.id);
+    if (m && confirm('✦ MATCH!\n\n' + m.a.nome + ' ↔ ' + m.b.nome + '\n' + m.model + '\n\nVer matches?')) setView('matches');
+  }, 600);
+};
+
+// Patch addHist
+window.addHist = async function() {
+  const inp = document.getElementById('histInput');
+  const text = inp.value.trim(); if (!text || !histId) return;
+  const c = clients.find(x => x.id === histId); if (!c) return;
+  if (!c.history) c.history = [];
+  c.history.push({ text, ts: Date.now() });
+  await fsSetClient(c);
+  inp.value = ''; renderHist(c);
+};
 
 const loginHTML = `<div id="loginScreen" style="position:fixed;inset:0;background:#0d0d0d;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;padding:24px;font-family:'Outfit',sans-serif;">
   <div style="width:100%;max-width:360px">
@@ -1348,11 +1459,14 @@ document.querySelector('.header-right').prepend(logoutBtn);
 
 onAuthStateChanged(auth, user => {
   if (user) {
+    window._fsUserId = user.uid;
     document.getElementById('loginScreen')?.remove();
     document.getElementById('app').style.display = 'flex';
     logoutBtn.style.display = 'block';
-    render();
+    startSync(user.uid);
   } else {
+    window._fsUserId = null;
+    stopSync();
     document.getElementById('app').style.display = 'none';
     logoutBtn.style.display = 'none';
     if (!document.getElementById('loginScreen')) {
